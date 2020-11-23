@@ -1,0 +1,4 @@
+QTabWidget {
+    border: none;
+    outline: none;
+}
