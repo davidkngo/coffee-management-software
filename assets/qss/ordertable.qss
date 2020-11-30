@@ -1,0 +1,10 @@
+QHeaderView::section {
+    width: 100px;
+    height: 50px;
+    background: #3c80e8;
+    border: 1px solid #1d47d9;
+}
+
+QTableWidget {
+    border: none;
+}

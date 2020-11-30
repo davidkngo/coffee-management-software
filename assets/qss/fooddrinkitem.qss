@@ -4,9 +4,11 @@ FDItemWidget {
 }
 
 FDItemWidget > QPushButton {
+    width: 80px;
+    height: 30px;
     background: aqua;
-    border-radius: 12px;
-    font-size: 10pt;
+    border-radius: 15px;
+    font-size: 12pt;
     font-weight: bold;
     color: whitesmoke;
 

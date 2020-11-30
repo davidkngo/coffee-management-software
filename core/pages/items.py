@@ -1,23 +1,32 @@
 from PySide2.QtCore import Signal, Qt, QSize, QRect
 from PySide2.QtGui import QPixmap, QResizeEvent, QPaintEvent, QPainterPath, QPainter
 from PySide2.QtWidgets import QWidget, QPushButton, QLabel, QGridLayout, QVBoxLayout, QGraphicsDropShadowEffect, \
-    QTableView, QButtonGroup
+    QHBoxLayout, QTableWidget, QSpacerItem, QSizePolicy, QHeaderView, QTableWidgetItem, QSpinBox, QLineEdit
 
-from core.pages.pagemanager import PageManager
 from core.utils import loadStyleSheet
+from core.widgets.comps import SpinBox
 
 
-class HomePage(PageManager):
-    def __init__(self, parent=None, pageLabel=''):
-        super(HomePage, self).__init__(parent, pageLabel)
-        self.mainPage = FDItemPage()
-        self.detailPage = FDDetailPage()
+class HomePage(QWidget):
+    def __init__(self, parent=None):
+        super(HomePage, self).__init__(parent)
 
-        self.addPage(self.mainPage)
-        self.addPage(self.detailPage)
+        self.orderWidget = FDItemOrderWidget()
+        self.itemGrid = FDItemGridWidget()
 
-        for i in self.mainPage.items:
-            i.detailedItem.connect(self.detailPage.detailedItemChanged)
+        for item in self.itemGrid.items:
+            item.orderedItem.connect(self.orderWidget.addItem)
+
+        layout = QHBoxLayout()
+        layout.addWidget(self.itemGrid)
+        layout.addWidget(self.orderWidget)
+
+        self.setLayout(layout)
+
+
+class ItemPage(QWidget):
+    def __init__(self, parent=None):
+        super(ItemPage, self).__init__(parent)
 
 
 class FDItemImage(QLabel):
@@ -30,7 +39,7 @@ class FDItemImage(QLabel):
 
 class FDItemWidget(QWidget):
     orderClicked = Signal(bool)
-    detailedItem = Signal(dict)
+    orderedItem = Signal(str, str)
 
     def __init__(self, parent=None):
         super(FDItemWidget, self).__init__(parent)
@@ -49,8 +58,7 @@ class FDItemWidget(QWidget):
         self.price.setAlignment(Qt.AlignHCenter)
 
         self.orderBtn = QPushButton()
-        self.detailBtn = QPushButton('Detail')
-        self.detailBtn.clicked.connect(self.emitItem)
+        self.orderBtn.clicked.connect(self.emitItem)
 
         layout = QGridLayout()
         layout.setContentsMargins(0, 0, 0, 10)
@@ -74,8 +82,9 @@ class FDItemWidget(QWidget):
         self.label.setText(label)
 
     def setPixmap(self, pixmap: QPixmap):
-        rect = pixmap.rect()
-        target = QPixmap(pixmap.size())
+        p = pixmap.scaled(QSize(1000, 1000))
+        rect = p.rect()
+        target = QPixmap(p.size())
         target.fill(Qt.transparent)
         painter = QPainter(target)
         painter.setRenderHint(QPainter.Antialiasing, True)
@@ -84,24 +93,19 @@ class FDItemWidget(QWidget):
 
         path = QPainterPath()
         path.setFillRule(Qt.WindingFill)
-        path.addRoundedRect(pixmap.rect(), 80, 80)
+        path.addRoundedRect(rect, 80, 80)
         path.addRect(QRect(rect.left(), rect.bottom() - 100, 100, 100))
         path.addRect(QRect(rect.right() - 100, rect.bottom() - 100, 100, 100))
 
         painter.drawPath(path.simplified())
         painter.setClipPath(path)
-        painter.drawPixmap(0, 0, pixmap)
+        painter.drawPixmap(0, 0, p)
         painter.end()
 
         self.image.setPixmap(target)
 
     def emitItem(self):
-        item = {
-            'label': self.label.text(),
-            'price': self.price.text(),
-        }
-
-        self.detailedItem.emit(item)
+        self.orderedItem.emit(self.label.text(), self.price.text())
 
     @staticmethod
     def createInstance(imageUrl, name, price):
@@ -117,37 +121,82 @@ class FDItemWidget(QWidget):
 class FDItemOrderWidget(QWidget):
     def __init__(self, parent=None):
         super(FDItemOrderWidget, self).__init__(parent)
+        styleSheet = loadStyleSheet("assets/qss/ordertable.qss")
+        self.setStyleSheet(styleSheet)
+        self.setFixedWidth(300)
 
-        self.tableView = QTableView()
+        self.tableWidget = QTableWidget()
+        self.tableWidget.verticalHeader().hide()
+        self.tableWidget.setShowGrid(False)
+        self.tableWidget.setColumnCount(3)
+        self.tableWidget.setHorizontalHeaderLabels(['Item', 'Quantity', 'Price'])
 
-        self.btnGroup = QButtonGroup()
+        header = self.tableWidget.horizontalHeader()
+        header.setSectionResizeMode(0, QHeaderView.Stretch)
+        header.setSectionResizeMode(1, QHeaderView.Stretch)
+        header.setSectionResizeMode(2, QHeaderView.Stretch)
+
+        self.btnGroupLayout = QHBoxLayout()
+        self.btnGroupLayout.addItem(QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Minimum))
+
+        self.printBtn = QPushButton('Print')
+        self.cancelBtn = QPushButton('Cancel')
+        self.cancelBtn.clicked.connect(self.cancelOrder)
+        self.btnGroupLayout.addWidget(self.cancelBtn)
+        self.btnGroupLayout.addWidget(self.printBtn)
 
         layout = QVBoxLayout()
-        layout.addWidget(self.tableView)
-        layout.addWidget(self.btnGroup)
+        layout.addWidget(self.tableWidget)
+        layout.addLayout(self.btnGroupLayout)
+        self.setLayout(layout)
+
+    def cancelOrder(self):
+        self.tableWidget.clearContents()
+        self.tableWidget.setRowCount(0)
+
+    def addItem(self, label, price):
+        existedItems = self.tableWidget.findItems(label, Qt.MatchExactly)
+
+        if len(existedItems) == 0:
+            numRows = self.tableWidget.rowCount()
+            self.tableWidget.insertRow(numRows)
+            self.tableWidget.setItem(numRows, 0, QTableWidgetItem(label))
+            self.tableWidget.setItem(numRows, 2, QTableWidgetItem(price))
+
+            spinBox = SpinBox(self.tableWidget)
+            spinBox.setAlignment(Qt.AlignCenter)
+            spinBox.setMinimum(1)
+            spinBox.onValueChanged.connect(self.updateQuantity)
+            self.tableWidget.setCellWidget(numRows, 1, spinBox)
+
+    def updateQuantity(self, oldValue, newValue):
+        row = self.tableWidget.currentRow()
+        item = self.tableWidget.item(row, 2)
+        updatedPrice = "%0.2f" % (float(item.text()) / oldValue * newValue)
+        item.setText(updatedPrice)
 
 
-class FDItemPage(QWidget):
+class FDItemGridWidget(QWidget):
     def __init__(self, parent=None):
-        super(FDItemPage, self).__init__(parent)
+        super(FDItemGridWidget, self).__init__(parent)
 
         self.items = []
 
-        self.item = FDItemWidget.createInstance("assets/img/coffee1.jpg", "Cappuchino", "$29.99")
+        self.item = FDItemWidget.createInstance("assets/img/coffee1.jpg", "Cappuchino", "29.99")
         self.items.append(self.item)
 
-        self.item = FDItemWidget.createInstance("assets/img/coffee1.jpg", "Cappuchino", "$29.99")
+        self.item = FDItemWidget.createInstance("assets/img/coffee2.jpg", "Cappuchino1", "29.99")
         self.items.append(self.item)
 
-        self.item = FDItemWidget.createInstance("assets/img/coffee1.jpg", "Cappuchino", "$29.99")
+        self.item = FDItemWidget.createInstance("assets/img/coffee3.jpg", "Cappuchino2", "29.99")
         self.items.append(self.item)
 
-        self.item = FDItemWidget.createInstance("assets/img/coffee1.jpg", "Cappuchino", "$29.99")
+        self.item = FDItemWidget.createInstance("assets/img/coffee4.jpeg", "Cappuchino3", "29.99")
         self.items.append(self.item)
 
         layout = QGridLayout()
         layout.setSpacing(20)
-        layout.setAlignment(Qt.AlignLeft | Qt.AlignTop)
+        layout.setAlignment(Qt.AlignHCenter | Qt.AlignTop)
         self.setLayout(layout)
 
         self.arrangeItems()
@@ -155,7 +204,7 @@ class FDItemPage(QWidget):
     def arrangeItems(self):
         layout = self.layout()
         rowCounter = 0
-        MaxCol = self.width() // 200
+        MaxCol = self.width() // 250
         for idx, i in enumerate(self.items):
             layout.addWidget(i, rowCounter, idx % MaxCol)
 
@@ -163,15 +212,23 @@ class FDItemPage(QWidget):
                 rowCounter += 1
 
     def resizeEvent(self, event: QResizeEvent):
-        super(FDItemPage, self).resizeEvent(event)
+        super(FDItemGridWidget, self).resizeEvent(event)
         self.arrangeItems()
 
 
-class FDDetailPage(QWidget):
-    detailedItem = Signal(dict)
-
+class FDItemDetail(QWidget):
     def __init__(self, parent=None):
-        super(FDDetailPage, self).__init__(parent)
+        super(FDItemDetail, self).__init__(parent)
 
-    def detailedItemChanged(self, value):
-        print(value)
+        self.nameLabel = QLabel('Name')
+        self.nameField = QLineEdit()
+
+        self.priceLabel = QLabel('Price')
+        self.priceField = QLineEdit()
+
+        self.imageThumbnail = QLabel()
+        self.browseBtn = QPushButton('Browse')
+
+        layout = QGridLayout()
+
+        self.setLayout(layout)
