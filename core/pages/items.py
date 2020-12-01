@@ -1,7 +1,11 @@
-from PySide2.QtCore import Signal, Qt, QSize, QRect
+import os
+from pathlib import Path
+from shutil import copyfile
+
+from PySide2.QtCore import Signal, Qt, QSize, QRect, QFileInfo, QFile
 from PySide2.QtGui import QPixmap, QResizeEvent, QPaintEvent, QPainterPath, QPainter
 from PySide2.QtWidgets import QWidget, QPushButton, QLabel, QGridLayout, QVBoxLayout, QGraphicsDropShadowEffect, \
-    QHBoxLayout, QTableWidget, QSpacerItem, QSizePolicy, QHeaderView, QTableWidgetItem, QSpinBox, QLineEdit
+    QHBoxLayout, QTableWidget, QSpacerItem, QSizePolicy, QHeaderView, QTableWidgetItem, QSpinBox, QLineEdit, QFileDialog
 
 from core.utils import loadStyleSheet
 from core.widgets.comps import SpinBox
@@ -27,6 +31,13 @@ class HomePage(QWidget):
 class ItemPage(QWidget):
     def __init__(self, parent=None):
         super(ItemPage, self).__init__(parent)
+
+        self.detailWidget = FDItemDetail()
+
+        layout = QVBoxLayout()
+        layout.addWidget(self.detailWidget)
+
+        self.setLayout(layout)
 
 
 class FDItemImage(QLabel):
@@ -220,15 +231,61 @@ class FDItemDetail(QWidget):
     def __init__(self, parent=None):
         super(FDItemDetail, self).__init__(parent)
 
+        styleSheet = loadStyleSheet("assets/qss/itemdetail.qss")
+        self.setStyleSheet(styleSheet)
+
         self.nameLabel = QLabel('Name')
         self.nameField = QLineEdit()
 
         self.priceLabel = QLabel('Price')
         self.priceField = QLineEdit()
 
+        fieldLayout = QVBoxLayout()
+        fieldLayout.setAlignment(Qt.AlignCenter | Qt.AlignTop)
+        fieldLayout.addWidget(self.nameLabel)
+        fieldLayout.addWidget(self.nameField)
+        fieldLayout.addWidget(self.priceLabel)
+        fieldLayout.addWidget(self.priceField)
+
         self.imageThumbnail = QLabel()
+        self.imageThumbnail.setObjectName('imageThumbnail')
+        self.imageThumbnail.setFixedSize(QSize(250, 250))
         self.browseBtn = QPushButton('Browse')
+        self.browseBtn.setObjectName('browseBtn')
+        self.browseBtn.setFixedWidth(250)
+        self.browseBtn.clicked.connect(self.browseImage)
+
+        self.newBtn = QPushButton('New')
+        self.deleteBtn = QPushButton('Delete')
+        self.editBtn = QPushButton('Edit')
+        self.saveBtn = QPushButton('Save')
+
+        btnLayout = QVBoxLayout()
+        btnLayout.addWidget(self.newBtn)
+        btnLayout.addWidget(self.deleteBtn)
+        btnLayout.addWidget(self.editBtn)
+        btnLayout.addWidget(self.saveBtn)
+
+        self.imageDialog = QFileDialog(self, caption="Open Image", filter="Image Files (*.png *.jpg *.jpeg *.bmp)")
 
         layout = QGridLayout()
-
+        layout.setAlignment(Qt.AlignHCenter | Qt.AlignTop)
+        layout.addWidget(self.imageThumbnail, 0, 0, rowSpan=2, alignment=Qt.AlignCenter)
+        layout.addWidget(self.browseBtn, 0, 0, rowSpan=2, alignment=Qt.AlignHCenter | Qt.AlignBottom)
+        layout.addLayout(fieldLayout, 0, 2, rowSpan=2)
+        layout.addLayout(btnLayout, 0, 3, rowSpan=2)
         self.setLayout(layout)
+
+    def browseImage(self):
+
+        try:
+            filePath = Path(self.imageDialog.getOpenFileName()[0])
+
+            desPath = os.path.join("assets/img", filePath.name)
+            copyfile(str(filePath), desPath)
+
+            self.imageThumbnail.setPixmap(QPixmap(desPath))
+            self.imageThumbnail.setScaledContents(True)
+
+        except IsADirectoryError as e:
+            print(e)
