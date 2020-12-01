@@ -4,7 +4,7 @@ Session = sessionmaker(bind=engine)
 
 session = Session()
 
-class CreateOrderController():
+class OrderController:
     def __init__(self):
         self.order = Order()
         self.total = 0
