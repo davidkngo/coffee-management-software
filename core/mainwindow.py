@@ -1,9 +1,8 @@
 from PySide2.QtCore import Qt, QSize
-from PySide2.QtGui import QPixmap, QImage
+from PySide2.QtGui import QImage
 from PySide2.QtWidgets import QMainWindow, QGridLayout, QWidget, QStackedWidget
 
-from .pages.items import HomePage
-from .pages.pagemanager import PageManager
+from .pages.items import HomePage, ItemPage
 from .utils import loadStyleSheet
 from .widgets.sidepane import SideButton, SidePane
 
@@ -16,9 +15,9 @@ class MainWindow(QMainWindow):
 
         self.setMinimumSize(QSize(1366, 768))
 
-        self.homePages = HomePage(pageLabel='Home')
+        self.homePages = HomePage()
 
-        self.itemPages = PageManager(pageLabel='Items')
+        self.itemPages = ItemPage()
 
         self.stackedWidget = QStackedWidget()
         self.stackedWidget.addWidget(self.homePages)

@@ -1,0 +1,22 @@
+QSpinBox {
+    border: none;
+}
+
+QSpinBox::down-button  {
+    subcontrol-origin: margin;
+    subcontrol-position: center left;
+    image: url("assets/icons/left-arrow.png");
+    background-color: #ffffff;
+    width: 10px;
+    height: 10px;
+
+}
+
+QSpinBox::up-button  {
+    subcontrol-origin: margin;
+    subcontrol-position: center right;
+    image: url("assets/icons/right-arrow.png");
+    background-color: #ffffff;
+    width: 10px;
+    height: 10px;
+}
