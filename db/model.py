@@ -24,7 +24,7 @@ class Order(Base):
 
     id = Column(Integer, primary_key=True)
     staffId = Column(Integer, ForeignKey('users.id'))
-    items = relationship('OrderedItems', cascade='all, delete-orphan')  # Many to many relation ship with Items, stored in orderedItems
+    items = relationship('OrderedItems', back_populates='order', cascade='all, delete-orphan')  # Many to many relation ship with Items, stored in orderedItems
 
     orderDate = Column(DateTime)
     paymentMethod = Column(String(50))
@@ -35,7 +35,7 @@ class Item(Base):   # IMPORTANT NOTE: Item and order should be of ONE TO MANY re
     __tablename__ = 'items'
 
     id = Column(Integer, primary_key=True)
-    orders = relationship('Order', secondary='orderedItems')    # Many to many relation ship with Items, stored in orderedItems
+    orders = relationship('OrderedItems', back_populates='item', cascade='all, delete-orphan')    # Many to many relation ship with Items, stored in orderedItems
 
     name = Column(String(50))
     price = Column(Float)
@@ -48,7 +48,8 @@ class OrderedItems(Base):
 
     orderId = Column(Integer, ForeignKey('orders.id'), primary_key=True)
     itemId = Column(Integer, ForeignKey('items.id'), primary_key=True)
-    item = relationship('Item')
+    item = relationship('Item', back_populates='orders')
+    order = relationship('Order', back_populates='items')
 
     quantity = Column(Integer)
 

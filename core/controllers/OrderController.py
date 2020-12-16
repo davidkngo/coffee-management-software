@@ -50,7 +50,8 @@ class OrderController:
 
 if __name__ == "__main__":
     orderController = OrderController()
-    items = {"item1": {"id": 1, "quantity": 1}, "item2": {"id": 2, "quantity": 2}, "item3": {"id": 3, "quantity": 2}}
+    items = {"item1": {"id": 4, "quantity": 1},
+             "item2": {"id": 3, "quantity": 2}}
     # orderController.createOrder(1, items)
     # orderController.editOrder(1, items)
-    # orderController.confirmOrder('debit card', 1)
+    orderController.confirmOrder('debit card', 1)

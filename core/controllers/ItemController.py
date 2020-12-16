@@ -4,15 +4,16 @@ Session = sessionmaker(bind = engine)
 session = Session()
 
 class ItemController:
-    def createItem(self, name, price, currency, imageUrl, registryDate):
-        item = Item()
-        item.name = name
-        item.price = price
-        item.currency = currency
-        item.imageUrl = imageUrl
-        item.registryDate = registryDate
+    def createItem(self, items):
+        for ite in items:
+            item = Item()
+            item.name = ite['name']
+            item.price = ite['price']
+            item.currency = ite['currency']
+            item.imageUrl = ite['imageUrl']
+            item.registryDate = ite['registryDate']
 
-        session.add(item)
+            session.add(item)
         session.commit()
 
     def deleteItem(self, itemId):
@@ -38,6 +39,10 @@ class ItemController:
 
 if __name__ == "__main__":
     itemController = ItemController()
-    # itemController.createItem("ice blend", 1.6, "dollar", "test", "2012-02-20 16:44:14")
-    # itemController.deleteItem(4)
-    itemController.editItem(5, name="blended", price=1.9, imageUrl="acv")
+    items = [{"name": "chocolate milk", "price": 1.8, "currency": "dollar", "imageUrl": "test1", "registryDate": "2012-02-20 16:44:14"},
+             {"name": "cold brew", "price": 1.2, "currency": "dollar", "imageUrl": "test2", "registryDate": "2012-02-20 16:44:14"},
+             {"name": "smoothies", "price": 2.0, "currency": "dollar", "imageUrl": "test3", "registryDate": "2012-02-20 16:44:14"},
+             {"name": "ice blend", "price": 1.3, "currency": "dollar", "imageUrl": "test4", "registryDate": "2012-02-20 16:44:14"}]
+    # itemController.createItem(items)
+    itemController.deleteItem(4)
+    # itemController.editItem(5, name="blended", price=1.9, imageUrl="acv")
