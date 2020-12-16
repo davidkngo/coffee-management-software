@@ -2,15 +2,13 @@ import os
 from pathlib import Path
 from shutil import copyfile
 
-from PySide2.QtCore import Signal, Qt, QSize, QRect, QFileInfo, QFile
+from PySide2.QtCore import Signal, Qt, QSize, QRect
 from PySide2.QtGui import QPixmap, QResizeEvent, QPaintEvent, QPainterPath, QPainter
 from PySide2.QtWidgets import QWidget, QPushButton, QLabel, QGridLayout, QVBoxLayout, QGraphicsDropShadowEffect, \
-    QHBoxLayout, QTableWidget, QSpacerItem, QSizePolicy, QHeaderView, QTableWidgetItem, QSpinBox, QLineEdit, QFileDialog
+    QHBoxLayout, QTableWidget, QSpacerItem, QSizePolicy, QHeaderView, QTableWidgetItem, QLineEdit, QFileDialog
 
 from core.utils import loadStyleSheet
 from core.widgets.comps import SpinBox
-from core.controllers.OrderController import OrderController
-from core.controllers.ControllerFactory import ControllerFactory
 
 
 class HomePage(QWidget):

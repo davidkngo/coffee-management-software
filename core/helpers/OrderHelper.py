@@ -7,7 +7,7 @@ Session = sessionmaker(bind=engine)
 
 session = Session()
 
-class OrderController:
+class OrderHelper:
     def createOrder(self, staffId, items):
         order = Order()
         order.orderDate = str(datetime.datetime.now().strftime("%x")) + " " + str(datetime.datetime.now().strftime("%X"))
@@ -50,7 +50,7 @@ class OrderController:
 
 
 if __name__ == "__main__":
-    orderController = OrderController()
+    orderController = OrderHelper()
     items = {"item1": {"id": 1, "quantity": 1}, "item2": {"id": 2, "quantity": 2}, "item3": {"id": 3, "quantity": 2}}
     # orderController.createOrder(1, items)
     # orderController.editOrder(1, items)

@@ -3,7 +3,7 @@ from sqlalchemy.orm import sessionmaker
 Session = sessionmaker(bind = engine)
 session = Session()
 
-class ItemController:
+class ItemHelper:
     def createItem(self, name, price, currency, imageUrl, registryDate):
         item = Item()
         item.name = name
@@ -37,7 +37,7 @@ class ItemController:
 
 
 if __name__ == "__main__":
-    itemController = ItemController()
+    itemController = ItemHelper()
     # itemController.createItem("ice blend", 1.6, "dollar", "test", "2012-02-20 16:44:14")
     # itemController.deleteItem(4)
     itemController.editItem(5, name="blended", price=1.9, imageUrl="acv")
