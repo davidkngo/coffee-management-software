@@ -9,6 +9,8 @@ from PySide2.QtWidgets import QWidget, QPushButton, QLabel, QGridLayout, QVBoxLa
 
 from core.utils import loadStyleSheet
 from core.widgets.comps import SpinBox
+from core.controllers.OrderController import OrderController
+from core.controllers.ControllerFactory import ControllerFactory
 
 
 class HomePage(QWidget):
@@ -228,8 +230,10 @@ class FDItemGridWidget(QWidget):
 
 
 class FDItemDetail(QWidget):
-    def __init__(self, parent=None):
+    def __init__(self, ctrlFactory=None, parent=None):
         super(FDItemDetail, self).__init__(parent)
+
+        self.ctrlFactory = ctrlFactory
 
         styleSheet = loadStyleSheet("assets/qss/itemdetail.qss")
         self.setStyleSheet(styleSheet)
@@ -250,12 +254,17 @@ class FDItemDetail(QWidget):
         self.imageThumbnail = QLabel()
         self.imageThumbnail.setObjectName('imageThumbnail')
         self.imageThumbnail.setFixedSize(QSize(250, 250))
+
+        self.imageUrl = None
+
         self.browseBtn = QPushButton('Browse')
         self.browseBtn.setObjectName('browseBtn')
         self.browseBtn.setFixedWidth(250)
         self.browseBtn.clicked.connect(self.browseImage)
 
         self.newBtn = QPushButton('New')
+        self.newBtn.clicked.connect(self.initNew)
+
         self.deleteBtn = QPushButton('Delete')
         self.editBtn = QPushButton('Edit')
         self.saveBtn = QPushButton('Save')
@@ -276,15 +285,25 @@ class FDItemDetail(QWidget):
         layout.addLayout(btnLayout, 0, 3, rowSpan=2)
         self.setLayout(layout)
 
+    def initNew(self):
+        self.imageThumbnail.clear()
+        self.nameField.clear()
+        self.priceField.clear()
+
+
+    def saveItem(self):
+        
+        desPath = os.path.join("assets/img", self.imageUrl.name)
+        copyfile(str(self.imageUrl), desPath)
+
     def browseImage(self):
 
         try:
             filePath = Path(self.imageDialog.getOpenFileName()[0])
 
-            desPath = os.path.join("assets/img", filePath.name)
-            copyfile(str(filePath), desPath)
+            self.imageUrl = filePath
 
-            self.imageThumbnail.setPixmap(QPixmap(desPath))
+            self.imageThumbnail.setPixmap(QPixmap(str(self.imageUrl)))
             self.imageThumbnail.setScaledContents(True)
 
         except IsADirectoryError as e:

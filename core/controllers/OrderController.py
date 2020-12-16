@@ -1,5 +1,6 @@
-from db.model import OrderedItems, Item, Order, engine
+
 from sqlalchemy.orm import sessionmaker
+from db.model import OrderedItems, Item, Order, engine
 import datetime
 
 Session = sessionmaker(bind=engine)

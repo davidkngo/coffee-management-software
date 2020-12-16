@@ -5,6 +5,8 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.orm import sessionmaker
 import datetime
 engine = create_engine("mysql://root:12345@localhost/coffeeshopmanagement", echo=True)
+# engine = create_engine("sqlite:///shop.db", echo=True)
+
 Base = declarative_base()
 
 class User(Base):
