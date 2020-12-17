@@ -9,17 +9,21 @@ from PySide2.QtWidgets import QWidget, QPushButton, QLabel, QGridLayout, QVBoxLa
 
 from core.utils import loadStyleSheet
 from core.widgets.comps import SpinBox
+from datetime import date
+from core.signals import WidgetSignal
 
+WidgetSignal = WidgetSignal()
 
 class HomePage(QWidget):
-    def __init__(self, parent=None):
+    def __init__(self, controllerFactory=None, parent=None):
         super(HomePage, self).__init__(parent)
 
-        self.orderWidget = FDItemOrderWidget()
-        self.itemGrid = FDItemGridWidget()
+        self.controllerFactory = controllerFactory
 
-        for item in self.itemGrid.items:
-            item.orderedItem.connect(self.orderWidget.addItem)
+        self.orderWidget = FDItemOrderWidget()
+        self.itemGrid = FDItemGridWidget(self.controllerFactory)
+
+        WidgetSignal.connect(self.connectOrdered)
 
         layout = QHBoxLayout()
         layout.addWidget(self.itemGrid)
@@ -27,17 +31,60 @@ class HomePage(QWidget):
 
         self.setLayout(layout)
 
+    def connectOrdered(self):
+        for item in self.itemGrid.items:
+            item.orderedItem.connect(self.orderWidget.addItem)
 
 class ItemPage(QWidget):
-    def __init__(self, parent=None):
+    
+    
+    def __init__(self, controllerFactory=None, parent=None):
         super(ItemPage, self).__init__(parent)
 
-        self.detailWidget = FDItemDetail()
+        self.controllerFactory = controllerFactory
 
+
+        self.detailWidget = FDItemDetail(controllerFactory=self.controllerFactory)
+        WidgetSignal.fdItemUpdated.connect(self.loadItems)
+
+        self.tableWidget = QTableWidget()
+        self.tableWidget.verticalHeader().hide()
+        self.tableWidget.setShowGrid(False)
+        self.tableWidget.setColumnCount(5)
+        self.tableWidget.setHorizontalHeaderLabels(['ID', 'Item', 'Price', 'Registry Date', 'Image Url'])
+
+        header = self.tableWidget.horizontalHeader()
+        header.setSectionResizeMode(0, QHeaderView.Stretch)
+        header.setSectionResizeMode(1, QHeaderView.Stretch)
+        header.setSectionResizeMode(2, QHeaderView.Stretch)
+        header.setSectionResizeMode(3, QHeaderView.Stretch)
+        header.setSectionResizeMode(4, QHeaderView.Stretch)
+
+        
         layout = QVBoxLayout()
         layout.addWidget(self.detailWidget)
-
+        layout.addWidget(self.tableWidget)
         self.setLayout(layout)
+
+    def paintEvent(self, event: QPaintEvent):
+        super(ItemPage, self).paintEvent(event)
+        self.loadItems()
+
+    def loadItems(self):
+        itemHelper = self.controllerFactory.get_controller("ItemHelper")
+
+        items = itemHelper.getAllItem()
+
+        self.tableWidget.clearContents()
+        for row, item in enumerate(items):
+
+            self.tableWidget.insertRow(row)
+            self.tableWidget.setItem(row, 0, QTableWidgetItem(str(item.id)))
+            self.tableWidget.setItem(row, 1, QTableWidgetItem(item.name))
+            self.tableWidget.setItem(row, 2, QTableWidgetItem(str(item.price)))
+            self.tableWidget.setItem(row, 3, QTableWidgetItem(str(item.registryDate)))
+            self.tableWidget.setItem(row, 4, QTableWidgetItem(item.imageUrl))
+
 
 
 class FDItemImage(QLabel):
@@ -87,7 +134,7 @@ class FDItemWidget(QWidget):
         self.setGraphicsEffect(shadowEffect)
 
     def setPrice(self, price):
-        self.price.setText(price)
+        self.price.setText(str(price))
 
     def setLabel(self, label):
         self.label.setText(label)
@@ -124,7 +171,7 @@ class FDItemWidget(QWidget):
         instance.setPixmap(QPixmap(imageUrl))
         instance.setLabel(name)
         instance.setPrice(price)
-        instance.orderBtn.setText(price)
+        instance.orderBtn.setText(str(price))
 
         return instance
 
@@ -188,27 +235,31 @@ class FDItemOrderWidget(QWidget):
 
 
 class FDItemGridWidget(QWidget):
-    def __init__(self, parent=None):
+    def __init__(self, controllerFactory=None, parent=None):
         super(FDItemGridWidget, self).__init__(parent)
 
+
+        self.controllerFactory = controllerFactory
+
         self.items = []
-
-        self.item = FDItemWidget.createInstance("assets/img/coffee1.jpg", "Cappuchino", "29.99")
-        self.items.append(self.item)
-
-        self.item = FDItemWidget.createInstance("assets/img/coffee2.jpg", "Cappuchino1", "29.99")
-        self.items.append(self.item)
-
-        self.item = FDItemWidget.createInstance("assets/img/coffee3.jpg", "Cappuchino2", "29.99")
-        self.items.append(self.item)
-
-        self.item = FDItemWidget.createInstance("assets/img/coffee4.jpeg", "Cappuchino3", "29.99")
-        self.items.append(self.item)
 
         layout = QGridLayout()
         layout.setSpacing(20)
         layout.setAlignment(Qt.AlignHCenter | Qt.AlignTop)
         self.setLayout(layout)
+
+        self.arrangeItems()
+
+        WidgetSignal.fdItemUpdated.connect(self.loadItems)
+
+        self.loadItems()
+
+    def loadItems(self):
+        itemHelper = self.controllerFactory.get_controller("ItemHelper")
+        items = itemHelper.getAllItem()
+
+        for item in items:
+            self.items.append(FDItemWidget.createInstance(item.imageUrl, item.name, item.price))
 
         self.arrangeItems()
 
@@ -228,10 +279,14 @@ class FDItemGridWidget(QWidget):
 
 
 class FDItemDetail(QWidget):
-    def __init__(self, ctrlFactory=None, parent=None):
+
+    itemUpdated = Signal()
+
+
+    def __init__(self, controllerFactory=None, parent=None):
         super(FDItemDetail, self).__init__(parent)
 
-        self.ctrlFactory = ctrlFactory
+        self.controllerFactory = controllerFactory
 
         styleSheet = loadStyleSheet("assets/qss/itemdetail.qss")
         self.setStyleSheet(styleSheet)
@@ -266,6 +321,7 @@ class FDItemDetail(QWidget):
         self.deleteBtn = QPushButton('Delete')
         self.editBtn = QPushButton('Edit')
         self.saveBtn = QPushButton('Save')
+        self.saveBtn.clicked.connect(self.saveItem)
 
         btnLayout = QVBoxLayout()
         btnLayout.addWidget(self.newBtn)
@@ -293,6 +349,12 @@ class FDItemDetail(QWidget):
         
         desPath = os.path.join("assets/img", self.imageUrl.name)
         copyfile(str(self.imageUrl), desPath)
+
+        registryDate = str(date.today())
+        itemHelper = self.controllerFactory.get_controller(key="ItemHelper")
+        itemHelper.createItem(self.nameField.text(), self.priceField.text(), "$", desPath, registryDate)
+
+        WidgetSignal.fdItemUpdated.emit()
 
     def browseImage(self):
 

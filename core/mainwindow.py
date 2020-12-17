@@ -2,10 +2,12 @@ from PySide2.QtCore import Qt, QSize
 from PySide2.QtGui import QImage
 from PySide2.QtWidgets import QMainWindow, QGridLayout, QWidget, QStackedWidget
 
-from .pages.items import HomePage, ItemPage
-from .utils import loadStyleSheet
-from .widgets.sidepane import SideButton, SidePane
-
+from core.pages.items import HomePage, ItemPage
+from core.utils import loadStyleSheet
+from core.widgets.sidepane import SideButton, SidePane
+from core.controller import ControllerFactory
+from core.helpers.ItemHelper import ItemHelper
+from core.helpers.OrderHelper import OrderHelper
 
 class MainWindow(QMainWindow):
     def __init__(self, parent=None):
@@ -15,9 +17,13 @@ class MainWindow(QMainWindow):
 
         self.setMinimumSize(QSize(1366, 768))
 
-        self.homePages = HomePage()
+        controllerFactory = ControllerFactory()
+        controllerFactory.register_controller(ItemHelper)
+        controllerFactory.register_controller(OrderHelper)
+    
+        self.homePages = HomePage(controllerFactory=controllerFactory)
 
-        self.itemPages = ItemPage()
+        self.itemPages = ItemPage(controllerFactory=controllerFactory)
 
         self.stackedWidget = QStackedWidget()
         self.stackedWidget.addWidget(self.homePages)

@@ -4,7 +4,8 @@ Session = sessionmaker(bind = engine)
 session = Session()
 
 class ItemHelper:
-    def createItem(self, name, price, currency, imageUrl, registryDate):
+    @staticmethod
+    def createItem(name, price, currency, imageUrl, registryDate):
         item = Item()
         item.name = name
         item.price = price
@@ -15,12 +16,14 @@ class ItemHelper:
         session.add(item)
         session.commit()
 
-    def deleteItem(self, itemId):
+    @staticmethod
+    def deleteItem(itemId):
         item = session.query(Item).filter(Item.id == itemId).first()
         session.delete(item)
         session.commit()
 
-    def editItem(self, itemId, name=None, price=None, currency=None, imageUrl=None, registryDate=None):
+    @staticmethod
+    def editItem(itemId, name=None, price=None, currency=None, imageUrl=None, registryDate=None):
         item = session.query(Item).filter(Item.id == itemId).first()
         if name:
             item.name = name
@@ -35,6 +38,10 @@ class ItemHelper:
 
         session.commit()
 
+    @staticmethod
+    def getAllItem():
+        items = session.query(Item).all()
+        return items
 
 if __name__ == "__main__":
     itemController = ItemHelper()
