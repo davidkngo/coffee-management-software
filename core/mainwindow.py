@@ -15,7 +15,7 @@ class MainWindow(QMainWindow):
         styleSheet = loadStyleSheet('assets/qss/mainwindow.qss')
         self.setStyleSheet(styleSheet)
 
-        self.setMinimumSize(QSize(1366, 768))
+        self.setMinimumSize(QSize(1450, 768))
 
         controllerFactory = ControllerFactory()
         controllerFactory.register_controller(ItemHelper)

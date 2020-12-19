@@ -5,7 +5,7 @@ from shutil import copyfile
 from PySide2.QtCore import Signal, Qt, QSize, QRect
 from PySide2.QtGui import QPixmap, QResizeEvent, QPaintEvent, QPainterPath, QPainter
 from PySide2.QtWidgets import QWidget, QPushButton, QLabel, QGridLayout, QVBoxLayout, QGraphicsDropShadowEffect, \
-    QHBoxLayout, QTableWidget, QSpacerItem, QSizePolicy, QHeaderView, QTableWidgetItem, QLineEdit, QFileDialog
+    QHBoxLayout, QTableWidget, QSpacerItem, QSizePolicy, QHeaderView, QTableWidgetItem, QLineEdit, QFileDialog, QScrollArea
 
 from core.utils import loadStyleSheet
 from core.widgets.comps import SpinBox
@@ -23,13 +23,23 @@ class HomePage(QWidget):
         self.orderWidget = FDItemOrderWidget()
         self.itemGrid = FDItemGridWidget(self.controllerFactory)
 
-        WidgetSignal.connect(self.connectOrdered)
+        scrollArea = QScrollArea(self)
+        scrollArea.setWidget(self.itemGrid)
+        scrollArea.setWidgetResizable(True)
+        scrollArea.setMinimumWidth(840)
+        scrollArea.setMaximumWidth(1330)
+
+
 
         layout = QHBoxLayout()
-        layout.addWidget(self.itemGrid)
+        layout.addWidget(scrollArea)
         layout.addWidget(self.orderWidget)
 
         self.setLayout(layout)
+
+        self.connectOrdered()
+
+        WidgetSignal.fdItemUpdated.connect(self.connectOrdered)
 
     def connectOrdered(self):
         for item in self.itemGrid.items:
@@ -66,6 +76,8 @@ class ItemPage(QWidget):
         layout.addWidget(self.tableWidget)
         self.setLayout(layout)
 
+        self.tableWidget.cellPressed.connect(self.selectRow)
+
     def paintEvent(self, event: QPaintEvent):
         super(ItemPage, self).paintEvent(event)
         self.loadItems()
@@ -76,6 +88,8 @@ class ItemPage(QWidget):
         items = itemHelper.getAllItem()
 
         self.tableWidget.clearContents()
+        self.tableWidget.setRowCount(0)
+
         for row, item in enumerate(items):
 
             self.tableWidget.insertRow(row)
@@ -85,7 +99,15 @@ class ItemPage(QWidget):
             self.tableWidget.setItem(row, 3, QTableWidgetItem(str(item.registryDate)))
             self.tableWidget.setItem(row, 4, QTableWidgetItem(item.imageUrl))
 
+    def selectRow(self, row, _):
+        
+        item = dict()
+        
+        for col in range(self.tableWidget.columnCount()):
+            header = self.tableWidget.horizontalHeaderItem(col).text()
+            item[header] = self.tableWidget.item(row, col).text()
 
+        WidgetSignal.fdItemDetailed.emit(item)
 
 class FDItemImage(QLabel):
     def __init__(self, parent=None):
@@ -238,11 +260,12 @@ class FDItemGridWidget(QWidget):
     def __init__(self, controllerFactory=None, parent=None):
         super(FDItemGridWidget, self).__init__(parent)
 
-
+        self.setMinimumWidth(680)
+        self.setMaximumWidth(1320)
         self.controllerFactory = controllerFactory
 
         self.items = []
-
+        
         layout = QGridLayout()
         layout.setSpacing(20)
         layout.setAlignment(Qt.AlignHCenter | Qt.AlignTop)
@@ -290,6 +313,12 @@ class FDItemDetail(QWidget):
 
         styleSheet = loadStyleSheet("assets/qss/itemdetail.qss")
         self.setStyleSheet(styleSheet)
+        
+        self.idLabel = QLabel('ID')
+        self.idField = QLabel()
+
+        self.resDateLabel = QLabel('Registry Date')
+        self.resDateField = QLabel()
 
         self.nameLabel = QLabel('Name')
         self.nameField = QLineEdit()
@@ -297,12 +326,15 @@ class FDItemDetail(QWidget):
         self.priceLabel = QLabel('Price')
         self.priceField = QLineEdit()
 
-        fieldLayout = QVBoxLayout()
-        fieldLayout.setAlignment(Qt.AlignCenter | Qt.AlignTop)
-        fieldLayout.addWidget(self.nameLabel)
-        fieldLayout.addWidget(self.nameField)
-        fieldLayout.addWidget(self.priceLabel)
-        fieldLayout.addWidget(self.priceField)
+        fieldLayout = QGridLayout()
+        fieldLayout.addWidget(self.idLabel, 0, 0)
+        fieldLayout.addWidget(self.idField, 0, 1)
+        fieldLayout.addWidget(self.resDateLabel, 0, 2)
+        fieldLayout.addWidget(self.resDateField, 0, 3)
+        fieldLayout.addWidget(self.nameLabel, 1, 0)
+        fieldLayout.addWidget(self.nameField, 1, 1)
+        fieldLayout.addWidget(self.priceLabel, 1, 2, alignment=Qt.AlignRight)
+        fieldLayout.addWidget(self.priceField, 1, 3)
 
         self.imageThumbnail = QLabel()
         self.imageThumbnail.setObjectName('imageThumbnail')
@@ -319,6 +351,8 @@ class FDItemDetail(QWidget):
         self.newBtn.clicked.connect(self.initNew)
 
         self.deleteBtn = QPushButton('Delete')
+        self.deleteBtn.clicked.connect(self.deleteItem)
+
         self.editBtn = QPushButton('Edit')
         self.saveBtn = QPushButton('Save')
         self.saveBtn.clicked.connect(self.saveItem)
@@ -339,11 +373,31 @@ class FDItemDetail(QWidget):
         layout.addLayout(btnLayout, 0, 3, rowSpan=2)
         self.setLayout(layout)
 
+        WidgetSignal.fdItemDetailed.connect(self.getDetailItem)
+
     def initNew(self):
         self.imageThumbnail.clear()
         self.nameField.clear()
         self.priceField.clear()
+        self.idField.clear()
+        self.resDateField.clear()
 
+    def deleteItem(self):
+        itemHelper = self.controllerFactory.get_controller('ItemHelper')
+        itemHelper.deleteItem(self.idField.text())
+
+    def editItem(self):
+        pass
+
+    def getDetailItem(self, item):
+        self.idField.setText(item['ID'])
+        self.resDateField.setText(item['Registry Date'])
+        self.nameField.setText(item['Item'])
+        self.priceField.setText(item['Price'])
+
+        self.imageUrl = item['Image Url']
+        self.imageThumbnail.setPixmap(QPixmap(str(self.imageUrl)))
+        self.imageThumbnail.setScaledContents(True)
 
     def saveItem(self):
         
