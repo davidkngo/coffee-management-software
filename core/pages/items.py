@@ -353,14 +353,12 @@ class FDItemDetail(QWidget):
         self.deleteBtn = QPushButton('Delete')
         self.deleteBtn.clicked.connect(self.deleteItem)
 
-        self.editBtn = QPushButton('Edit')
         self.saveBtn = QPushButton('Save')
         self.saveBtn.clicked.connect(self.saveItem)
 
         btnLayout = QVBoxLayout()
         btnLayout.addWidget(self.newBtn)
         btnLayout.addWidget(self.deleteBtn)
-        btnLayout.addWidget(self.editBtn)
         btnLayout.addWidget(self.saveBtn)
 
         self.imageDialog = QFileDialog(self, caption="Open Image", filter="Image Files (*.png *.jpg *.jpeg *.bmp)")
@@ -385,6 +383,7 @@ class FDItemDetail(QWidget):
     def deleteItem(self):
         itemHelper = self.controllerFactory.get_controller('ItemHelper')
         itemHelper.deleteItem(self.idField.text())
+        WidgetSignal.fdItemUpdated.emit()
 
     def editItem(self):
         pass
@@ -400,13 +399,18 @@ class FDItemDetail(QWidget):
         self.imageThumbnail.setScaledContents(True)
 
     def saveItem(self):
-        
-        desPath = os.path.join("assets/img", self.imageUrl.name)
-        copyfile(str(self.imageUrl), desPath)
-
-        registryDate = str(date.today())
         itemHelper = self.controllerFactory.get_controller(key="ItemHelper")
-        itemHelper.createItem(self.nameField.text(), self.priceField.text(), "$", desPath, registryDate)
+        
+        if self.idField.text() == '':
+            desPath = os.path.join("assets/img", self.imageUrl.name)
+            copyfile(str(self.imageUrl), desPath)
+
+            registryDate = str(date.today())
+            
+            itemHelper.createItem(self.nameField.text(), self.priceField.text(), "$", desPath, registryDate)
+
+        else:
+            itemHelper.editItem(self.idField.text(), self.nameField.text(), self.priceField.text())
 
         WidgetSignal.fdItemUpdated.emit()
 
