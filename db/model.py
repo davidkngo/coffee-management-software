@@ -44,6 +44,7 @@ class Item(Base):   # IMPORTANT NOTE: Item and order should be of ONE TO MANY re
     currency = Column(String(50))
     imageUrl = Column(String(50))
     registryDate = Column(DateTime)
+    stockQuantity = Column(Integer)
 
 class OrderedItems(Base):
     __tablename__ = 'orderedItems'

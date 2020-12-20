@@ -1,7 +1,9 @@
 from db.model import Item, engine
 from sqlalchemy.orm import sessionmaker
-Session = sessionmaker(bind = engine)
+
+Session = sessionmaker(bind=engine)
 session = Session()
+
 
 class ItemHelper:
     @staticmethod
@@ -42,6 +44,7 @@ class ItemHelper:
     def getAllItem():
         items = session.query(Item).all()
         return items
+
 
 if __name__ == "__main__":
     itemController = ItemHelper()
