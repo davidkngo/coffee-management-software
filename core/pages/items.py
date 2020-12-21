@@ -53,7 +53,6 @@ class ItemPage(QWidget):
 
         self.controllerFactory = controllerFactory
 
-
         self.detailWidget = FDItemDetail(controllerFactory=self.controllerFactory)
         WidgetSignal.fdItemUpdated.connect(self.loadItems)
 

@@ -7,13 +7,14 @@ session = Session()
 
 class ItemHelper:
     @staticmethod
-    def createItem(name, price, currency, imageUrl, registryDate):
+    def createItem(name, price, currency, imageUrl, registryDate, stockQuantity):
         item = Item()
         item.name = name
         item.price = price
         item.currency = currency
         item.imageUrl = imageUrl
         item.registryDate = registryDate
+        item.stockQuantity = stockQuantity
 
         session.add(item)
         session.commit()
@@ -25,7 +26,7 @@ class ItemHelper:
         session.commit()
 
     @staticmethod
-    def editItem(itemId, name=None, price=None, currency=None, imageUrl=None, registryDate=None):
+    def editItem(itemId, name=None, price=None, currency=None, imageUrl=None, registryDate=None, stockQuantity=None):
         item = session.query(Item).filter(Item.id == itemId).first()
         if name:
             item.name = name
@@ -37,6 +38,8 @@ class ItemHelper:
             item.imageUrl = imageUrl
         if registryDate:
             item.registryDate = registryDate
+        if stockQuantity:
+            item.stockQuantity = stockQuantity
 
         session.commit()
 
@@ -48,6 +51,10 @@ class ItemHelper:
 
 if __name__ == "__main__":
     itemController = ItemHelper()
-    # itemController.createItem("ice blend", 1.6, "dollar", "test", "2012-02-20 16:44:14")
+    items = [{"name": "ice blend", "price": 1.6, "currency": "dollar", "imageUrl": "test", "registryDate": "2012-02-20 16:44:14", "stockQuantity": 5},
+             {"name": "cold brew", "price": 2.0, "currency": "dollar", "imageUrl": "test", "registryDate": "2012-02-20 16:44:14", "stockQuantity": 2},
+             {"name": "smoothies", "price": 1.8, "currency": "dollar", "imageUrl": "test", "registryDate": "2012-02-20 16:44:14", "stockQuantity": 1}]
+    for i in items:
+        itemController.createItem(i["name"], i["price"], i["currency"], i["imageUrl"], i["registryDate"], i["stockQuantity"])
     # itemController.deleteItem(4)
-    itemController.editItem(5, name="blended", price=1.9, imageUrl="acv")
+    # itemController.editItem(5, name="blended", price=1.9, imageUrl="acv")
