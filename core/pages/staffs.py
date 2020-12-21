@@ -31,20 +31,11 @@ class LoginPage(QWidget):
 
         self.loginBox = FDLoginBox(self.controllerFactory)
 
-        # scrollArea = QScrollArea(self)
-        # scrollArea.setWidget(self.loginBox)
-        # scrollArea.setWidgetResizable(True)
-        # scrollArea.setMinimumWidth(840)
-        # scrollArea.setMaximumWidth(1330)
-
         layout = QHBoxLayout()
         layout.addWidget(self.loginBox)
 
         self.setLayout(layout)
 
-        self.connectOrdered()
-
-        WidgetSignal.fdItemUpdated.connect(self.connectOrdered)
 
 class FDLoginBox(QWidget):
     def __init__(self, parent=None):
@@ -98,7 +89,7 @@ class FDLoginBox(QWidget):
         userHelper = self.controllerFactory.get_controller(key="UserHelper")
 
         userHelper.login(id, name, role)
-        # ... to be continued
+
 
 class StaffPage(QWidget):
     def __init__(self, controllerFactory=None, parent=None):
@@ -205,7 +196,11 @@ class StaffDetail(QWidget):
         self.saveBtn = QPushButton('Save')
         self.saveBtn.clicked.connect(self.saveUser)
 
+        self.newBtn = QPushButton('New')
+        self.newBtn.clicked.connect(self.initUser)
+
         btnLayout = QVBoxLayout()
+        btnLayout.addWidget(self.newBtn)
         btnLayout.addWidget(self.saveBtn)
 
         layout = QGridLayout()
@@ -225,6 +220,13 @@ class StaffDetail(QWidget):
         WidgetSignal.userUpdated.emit()
 
     
+    def initUser(self):
+        self.idField.clear()
+        self.usernameField.clear()
+        self.lastnameField.clear()
+        self.emailField.clear()
+        self.roleField.clear()
+
     def getDetailUser(self, user):
         self.idField.setText(user['ID'])
         self.usernameField.setText(user['First Name'])
