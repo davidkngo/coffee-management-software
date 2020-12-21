@@ -8,16 +8,17 @@ Session = sessionmaker(bind=engine)
 session = Session()
 
 class OrderHelper:
-    def createOrder(self, staffId, items):
+    @staticmethod
+    def createOrder(staffId, items):
         order = Order()
-        order.orderDate = str(datetime.datetime.now().strftime("%x")) + " " + str(datetime.datetime.now().strftime("%X"))
+        order.orderDate = str(datetime.datetime.now().strftime('%Y-%m-%d')) + " " + str(datetime.datetime.now().strftime("%X"))
+        print("\n\n\n\t\t\t__________\n\t\t\tTHE DATE: ", str(datetime.datetime.now().strftime("%x")) + " " + str(datetime.datetime.now().strftime("%X")))
         order.paymentMethod = None
         order.staffId = staffId
         order.status = False   # False means unpaid, True means paid
         order.totalPrice = 0
         for ite in items.values():
-            item = session.query(Item).filter(Item.id == ite["id"]).first()
-            print("item is:", item)
+            item = session.query(Item).filter(Item.name == ite["name"]).first()
 
             order.totalPrice += item.price * ite["quantity"]
 
@@ -51,7 +52,7 @@ class OrderHelper:
 
 if __name__ == "__main__":
     orderController = OrderHelper()
-    items = {"item1": {"id": 1, "quantity": 1}, "item2": {"id": 2, "quantity": 2}, "item3": {"id": 3, "quantity": 2}}
-    # orderController.createOrder(1, items)
+    items = {"item1": {"name": "smoothies", "quantity": 1}}
+    orderController.createOrder(1, items)
     # orderController.editOrder(1, items)
     # orderController.confirmOrder('debit card', 1)

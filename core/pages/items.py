@@ -20,7 +20,7 @@ class HomePage(QWidget):
 
         self.controllerFactory = controllerFactory
 
-        self.orderWidget = FDItemOrderWidget()
+        self.orderWidget = FDItemOrderWidget(self.controllerFactory)
         self.itemGrid = FDItemGridWidget(self.controllerFactory)
 
         scrollArea = QScrollArea(self)
@@ -198,8 +198,11 @@ class FDItemWidget(QWidget):
 
 
 class FDItemOrderWidget(QWidget):
-    def __init__(self, parent=None):
+    def __init__(self, controllerFactory=None, parent=None):
         super(FDItemOrderWidget, self).__init__(parent)
+
+        self.controllerFactory = controllerFactory
+
         styleSheet = loadStyleSheet("assets/qss/ordertable.qss")
         self.setStyleSheet(styleSheet)
         self.setFixedWidth(300)
@@ -221,6 +224,7 @@ class FDItemOrderWidget(QWidget):
         self.printBtn = QPushButton('Print')
         self.cancelBtn = QPushButton('Cancel')
         self.cancelBtn.clicked.connect(self.cancelOrder)
+        self.printBtn.clicked.connect(self.placeOrder)
         self.btnGroupLayout.addWidget(self.cancelBtn)
         self.btnGroupLayout.addWidget(self.printBtn)
 
@@ -232,6 +236,16 @@ class FDItemOrderWidget(QWidget):
     def cancelOrder(self):
         self.tableWidget.clearContents()
         self.tableWidget.setRowCount(0)
+
+    def placeOrder(self):
+        orderHelper = self.controllerFactory.get_controller("OrderHelper")
+        rowcount = self.tableWidget.rowCount()
+        colcount = self.tableWidget.columnCount()
+        items = {}
+        for i in range(rowcount):
+            items[i] = {"name": self.tableWidget.item(i, 0).text(), "quantity": self.tableWidget.cellWidget(i, 1).value()}
+            print("\n\t\termmm: ", items[i])
+        orderHelper.createOrder(staffId=1, items=items)
 
     def addItem(self, label, price):
         existedItems = self.tableWidget.findItems(label, Qt.MatchExactly)
