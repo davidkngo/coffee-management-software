@@ -384,9 +384,6 @@ class FDItemDetail(QWidget):
         itemHelper.deleteItem(self.idField.text())
         WidgetSignal.fdItemUpdated.emit()
 
-    def editItem(self):
-        pass
-
     def getDetailItem(self, item):
         self.idField.setText(item['ID'])
         self.resDateField.setText(item['Registry Date'])

@@ -38,6 +38,11 @@ class UserHelper:
         session.commit()
 
     @staticmethod
+    def getAllUser():
+        items = session.query(User).all()
+        return items
+
+    @staticmethod
     def login(id, name, role):
         user = session.query(User).filter(User.id == id).first()
         if not user:

@@ -9,6 +9,7 @@ from core.widgets.sidepane import SideButton, SidePane
 from core.controller import ControllerFactory
 from core.helpers.ItemHelper import ItemHelper
 from core.helpers.OrderHelper import OrderHelper
+from core.helpers.UserHelper import UserHelper
 
 class MainWindow(QMainWindow):
     def __init__(self, parent=None):
@@ -21,6 +22,7 @@ class MainWindow(QMainWindow):
         controllerFactory = ControllerFactory()
         controllerFactory.register_controller(ItemHelper)
         controllerFactory.register_controller(OrderHelper)
+        controllerFactory.register_controller(UserHelper)
     
         self.homePages = HomePage(controllerFactory=controllerFactory)
 

@@ -11,8 +11,17 @@ from core.utils import loadStyleSheet
 from core.widgets.comps import SpinBox
 from datetime import date
 from core.signals import WidgetSignal
+from enum import IntEnum
+
 
 WidgetSignal = WidgetSignal()
+
+
+class RoleEnum(IntEnum):
+    ADMIN = 1
+    MANANGER = 2
+    STAFF = 3
+
 
 class LoginPage(QWidget):
     def __init__(self, controllerFactory=None, parent=None):
@@ -99,9 +108,59 @@ class StaffPage(QWidget):
 
         self.detailWidget = StaffDetail(controllerFactory=self.controllerFactory)
 
+        self.tableWidget = QTableWidget()
+        self.tableWidget.verticalHeader().hide()
+        self.tableWidget.setShowGrid(False)
+        self.tableWidget.setColumnCount(5)
+        self.tableWidget.setHorizontalHeaderLabels(['ID', 'First Name', 'Last Name', 'Email', 'Role'])
+
+        header = self.tableWidget.horizontalHeader()
+        header.setSectionResizeMode(0, QHeaderView.Stretch)
+        header.setSectionResizeMode(1, QHeaderView.Stretch)
+        header.setSectionResizeMode(2, QHeaderView.Stretch)
+        header.setSectionResizeMode(3, QHeaderView.Stretch)
+        header.setSectionResizeMode(4, QHeaderView.Stretch)
+
+        
         layout = QVBoxLayout()
         layout.addWidget(self.detailWidget)
+        layout.addWidget(self.tableWidget)
         self.setLayout(layout)
+
+        self.loadUser()
+
+        WidgetSignal.userUpdated.connect(self.loadUser)
+
+        self.tableWidget.cellPressed.connect(self.selectRow)
+
+
+    def loadUser(self):
+        userHelper = self.controllerFactory.get_controller("UserHelper")
+
+        users = userHelper.getAllUser()
+
+        self.tableWidget.clearContents()
+        self.tableWidget.setRowCount(0)
+
+        for row, user in enumerate(users):
+
+            self.tableWidget.insertRow(row)
+            self.tableWidget.setItem(row, 0, QTableWidgetItem(str(user.id)))
+            self.tableWidget.setItem(row, 1, QTableWidgetItem(user.firstName))
+            self.tableWidget.setItem(row, 2, QTableWidgetItem(user.lastName))
+            self.tableWidget.setItem(row, 3, QTableWidgetItem(user.email))
+            self.tableWidget.setItem(row, 4, QTableWidgetItem(RoleEnum(user.role).name))
+
+    
+    def selectRow(self, row, _):
+        
+        user = dict()
+        
+        for col in range(self.tableWidget.columnCount()):
+            header = self.tableWidget.horizontalHeaderItem(col).text()
+            user[header] = self.tableWidget.item(row, col).text()
+
+        WidgetSignal.userDetailed.emit(user)
 
 class StaffDetail(QWidget):
     def __init__(self, controllerFactory=None, parent=None):
@@ -113,7 +172,7 @@ class StaffDetail(QWidget):
         self.setStyleSheet(styleSheet)
 
         self.idLabel = QLabel('ID')
-        self.idField = QLineEdit()
+        self.idField = QLabel()
 
         self.usernameLabel = QLabel('User First Name')
         self.usernameField = QLineEdit()
@@ -143,48 +202,33 @@ class StaffDetail(QWidget):
         fieldLayout.addWidget(self.roleLabel, 2, 2)
         fieldLayout.addWidget(self.roleField, 2, 3)
 
-        self.imageThumbnail = QLabel()
-        self.imageThumbnail.setObjectName('imageThumbnail')
-        self.imageThumbnail.setFixedSize(QSize(250, 250))
-
-        self.imageUrl = None
-
-        self.browseBtn = QPushButton('Browse')
-        self.browseBtn.setObjectName('browseBtn')
-        self.browseBtn.setFixedWidth(250)
-        self.browseBtn.clicked.connect(self.browseImage)
-
         self.saveBtn = QPushButton('Save')
         self.saveBtn.clicked.connect(self.saveUser)
 
         btnLayout = QVBoxLayout()
         btnLayout.addWidget(self.saveBtn)
 
-        self.imageDialog = QFileDialog(self, caption="Open Image", filter="Image Files (*.png *.jpg *.jpeg *.bmp)")
-
         layout = QGridLayout()
         layout.setAlignment(Qt.AlignHCenter | Qt.AlignTop)
-        layout.addWidget(self.imageThumbnail, 0, 0, rowSpan=2, alignment=Qt.AlignCenter)
-        layout.addWidget(self.browseBtn, 0, 0, rowSpan=2, alignment=Qt.AlignHCenter | Qt.AlignBottom)
-        layout.addLayout(fieldLayout, 0, 2, rowSpan=2)
-        layout.addLayout(btnLayout, 0, 3, rowSpan=2)
+        layout.addLayout(fieldLayout, 0, 1, rowSpan=2)
+        layout.addLayout(btnLayout, 0, 2, rowSpan=2)
         self.setLayout(layout)
 
-    def browseImage(self):
-
-        try:
-            filePath = Path(self.imageDialog.getOpenFileName()[0])
-
-            self.imageUrl = filePath
-
-            self.imageThumbnail.setPixmap(QPixmap(str(self.imageUrl)))
-            self.imageThumbnail.setScaledContents(True)
-
-        except IsADirectoryError as e:
-            print(e)
+        WidgetSignal.userDetailed.connect(self.getDetailUser)
 
     def saveUser(self):
         userHelper = self.controllerFactory.get_controller(key="UserHelper")
 
-        userHelper.editUser(self.usernameField.text(), self.lastnameField.text(), self.emailField.text())
+        userHelper.createUser(name=self.usernameField.text(), lastname=self.lastnameField.text(),
+         email=self.emailField.text(), role=RoleEnum[self.roleField.text().upper()].value)
+
+        WidgetSignal.userUpdated.emit()
+
+    
+    def getDetailUser(self, user):
+        self.idField.setText(user['ID'])
+        self.usernameField.setText(user['First Name'])
+        self.lastnameField.setText(user['Last Name'])
+        self.emailField.setText(user['Email'])
+        self.roleField.setText(user['Role'])
 
