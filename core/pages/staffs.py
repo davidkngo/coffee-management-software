@@ -99,5 +99,92 @@ class StaffPage(QWidget):
 
         self.detailWidget = StaffDetail(controllerFactory=self.controllerFactory)
 
+        layout = QVBoxLayout()
+        layout.addWidget(self.detailWidget)
+        self.setLayout(layout)
+
 class StaffDetail(QWidget):
     def __init__(self, controllerFactory=None, parent=None):
+        super(StaffDetail, self).__init__(parent)
+
+        self.controllerFactory = controllerFactory
+
+        styleSheet = loadStyleSheet("assets/qss/itemdetail.qss")
+        self.setStyleSheet(styleSheet)
+
+        self.idLabel = QLabel('ID')
+        self.idField = QLineEdit()
+
+        self.usernameLabel = QLabel('User First Name')
+        self.usernameField = QLineEdit()
+
+        self.lastnameLabel = QLabel('User Last Name')
+        self.lastnameField = QLineEdit()
+
+        self.emailLabel = QLabel('Email')
+        self.emailField = QLineEdit()
+
+        self.roleLabel = QLabel('Role')
+        self.roleField = QLineEdit()
+
+        fieldLayout = QGridLayout()
+        fieldLayout.addWidget(self.idLabel, 0, 0)
+        fieldLayout.addWidget(self.idField, 0, 1)
+
+        fieldLayout.addWidget(self.usernameLabel, 1, 0)
+        fieldLayout.addWidget(self.usernameField, 1, 1)
+
+        fieldLayout.addWidget(self.lastnameLabel, 1, 2)
+        fieldLayout.addWidget(self.lastnameField, 1, 3)
+
+        fieldLayout.addWidget(self.emailLabel, 2, 0)
+        fieldLayout.addWidget(self.emailField, 2, 1)
+
+        fieldLayout.addWidget(self.roleLabel, 2, 2)
+        fieldLayout.addWidget(self.roleField, 2, 3)
+
+        self.imageThumbnail = QLabel()
+        self.imageThumbnail.setObjectName('imageThumbnail')
+        self.imageThumbnail.setFixedSize(QSize(250, 250))
+
+        self.imageUrl = None
+
+        self.browseBtn = QPushButton('Browse')
+        self.browseBtn.setObjectName('browseBtn')
+        self.browseBtn.setFixedWidth(250)
+        self.browseBtn.clicked.connect(self.browseImage)
+
+        self.saveBtn = QPushButton('Save')
+        self.saveBtn.clicked.connect(self.saveUser)
+
+        btnLayout = QVBoxLayout()
+        btnLayout.addWidget(self.saveBtn)
+
+        self.imageDialog = QFileDialog(self, caption="Open Image", filter="Image Files (*.png *.jpg *.jpeg *.bmp)")
+
+        layout = QGridLayout()
+        layout.setAlignment(Qt.AlignHCenter | Qt.AlignTop)
+        layout.addWidget(self.imageThumbnail, 0, 0, rowSpan=2, alignment=Qt.AlignCenter)
+        layout.addWidget(self.browseBtn, 0, 0, rowSpan=2, alignment=Qt.AlignHCenter | Qt.AlignBottom)
+        layout.addLayout(fieldLayout, 0, 2, rowSpan=2)
+        layout.addLayout(btnLayout, 0, 3, rowSpan=2)
+        self.setLayout(layout)
+
+    def browseImage(self):
+
+        try:
+            filePath = Path(self.imageDialog.getOpenFileName()[0])
+
+            self.imageUrl = filePath
+
+            self.imageThumbnail.setPixmap(QPixmap(str(self.imageUrl)))
+            self.imageThumbnail.setScaledContents(True)
+
+        except IsADirectoryError as e:
+            print(e)
+
+    def saveUser(self):
+        userHelper = self.controllerFactory.get_controller(key="UserHelper")
+
+        userHelper.editUser(self.usernameField.text(), self.lastnameField.text(), self.emailField.text())
+

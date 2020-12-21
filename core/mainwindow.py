@@ -3,6 +3,7 @@ from PySide2.QtGui import QImage
 from PySide2.QtWidgets import QMainWindow, QGridLayout, QWidget, QStackedWidget
 
 from core.pages.items import HomePage, ItemPage
+from core.pages.staffs import StaffPage, LoginPage
 from core.utils import loadStyleSheet
 from core.widgets.sidepane import SideButton, SidePane
 from core.controller import ControllerFactory
@@ -25,18 +26,24 @@ class MainWindow(QMainWindow):
 
         self.itemPages = ItemPage(controllerFactory=controllerFactory)
 
+        self.staffPages = StaffPage(controllerFactory=controllerFactory)
+
         self.stackedWidget = QStackedWidget()
         self.stackedWidget.addWidget(self.homePages)
         self.stackedWidget.addWidget(self.itemPages)
+        self.stackedWidget.addWidget(self.staffPages)
 
         self.homeBtn = SideButton(content='Home')
         self.homeBtn.setPixmap(QImage('assets/icons/home.png'))
         self.itemBtn = SideButton(content='Items')
         self.itemBtn.setPixmap(QImage('assets/icons/shipping.png'))
+        self.staffBtn = SideButton(content='Staff')
+        self.staffBtn.setPixmap(QImage('assets/icons/user.png'))
 
         self.sidePane = SidePane()
         self.sidePane.addSideButton(self.homeBtn)
         self.sidePane.addSideButton(self.itemBtn)
+        self.sidePane.addSideButton(self.staffBtn)
         self.sidePane.selectionChanged.connect(self.changePage)
 
         layout = QGridLayout()

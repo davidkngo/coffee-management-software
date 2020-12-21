@@ -24,7 +24,7 @@ class UserHelper:
         session.commit()
 
     @staticmethod
-    def editItem(id, name=None, lastname=None, email=None, role=None):
+    def editUser(id, name=None, lastname=None, email=None, role=None):
         user = session.query(User).filter(User.id == id).first()
         if name:
             user.name = name
