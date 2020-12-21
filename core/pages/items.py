@@ -53,7 +53,6 @@ class ItemPage(QWidget):
 
         self.controllerFactory = controllerFactory
 
-
         self.detailWidget = FDItemDetail(controllerFactory=self.controllerFactory)
         WidgetSignal.fdItemUpdated.connect(self.loadItems)
 
@@ -384,9 +383,6 @@ class FDItemDetail(QWidget):
         itemHelper = self.controllerFactory.get_controller('ItemHelper')
         itemHelper.deleteItem(self.idField.text())
         WidgetSignal.fdItemUpdated.emit()
-
-    def editItem(self):
-        pass
 
     def getDetailItem(self, item):
         self.idField.setText(item['ID'])
