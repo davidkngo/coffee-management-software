@@ -46,9 +46,9 @@ class UserHelper:
     def login(id, name, role):
         user = session.query(User).filter(User.id == id).first()
         if not user:
-            return "User not found"
+            return False, "User not found"
         if name == user.firstName and role == user.role:
-            return user
+            return True, user
         else:
-            return "Wrong name/ role"
+            return False, "Wrong name/ role"
 
